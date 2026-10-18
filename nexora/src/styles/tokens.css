@@ -1,0 +1,66 @@
+:root {
+  /* palette */
+  --plum: #211a2e;
+  --purple: #302642;
+  --purple-2: #3c3052;
+  --purple-3: #4b3d66;
+  --cream: #fff8f1;
+  --gray: #f3f0f7;
+  --white: #ffffff;
+  --lav: #a78bfa;
+  --lav-ink: #6544d4;
+  --lav-edge: #7656e0;
+  --peach: #ffb38a;
+  --peach-ink: #b4521f;
+  --peach-edge: #d9824f;
+  --blue: #8ed8ff;
+  --blue-ink: #17739f;
+  --blue-edge: #52a9d4;
+  --mint: #8de7c2;
+  --mint-ink: #167a55;
+  --mint-edge: #52b78c;
+  --pink: #ff9fcb;
+  --pink-ink: #b0336f;
+  --pink-edge: #d46a9d;
+  --gold: #f5c86a;
+
+  /* text */
+  --ink: #211a2e;
+  --ink-2: #5f5575;
+  --on-dark: #fff8f1;
+  --on-dark-2: #bdb3d4;
+  --line-dark: rgb(255 248 241 / 0.12);
+  --line-light: rgb(33 26 46 / 0.12);
+
+  /* type */
+  --display: 'Bricolage Grotesque Variable', 'Trebuchet MS', system-ui, sans-serif;
+  --body: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+  /* shape */
+  --r-s: 12px;
+  --r-m: 20px;
+  --r-l: 28px;
+  --r-xl: 44px;
+
+  /* depth */
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.75) inset, 0 22px 40px -24px rgb(12 6 24 / 0.7), 0 2px 6px rgb(12 6 24 / 0.16);
+  --shadow-dark: 0 0 0 1px rgb(255 255 255 / 0.07), 0 26px 44px -26px rgb(0 0 0 / 0.7);
+
+  /* motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* arena identities */
+  --coding: #8de7c2;
+  --debate: #ff9fcb;
+  --roast: #ffb38a;
+  --business: #8ed8ff;
+  --knowledge: #ffcf8a;
+  --mind: #a78bfa;
+
+  --nav-h: 76px;
+  --side-w: 256px;
+  --tab-h: 74px;
+}

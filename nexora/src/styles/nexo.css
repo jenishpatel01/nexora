@@ -1,0 +1,71 @@
+.nexo-wrap { position: relative; display: inline-block; }
+.nexo { display: block; overflow: visible; --ex: 0; --ey: 0; }
+.nexo * { transform-box: fill-box; transform-origin: center; }
+.nexo.is-floating .nexo-float { animation: nx-float 4.6s ease-in-out infinite; }
+.nexo.is-floating .nexo-shadow { animation: nx-shadow 4.6s ease-in-out infinite; }
+.nexo-breathe { transform-origin: 50% 92%; animation: nx-breathe 3.8s ease-in-out infinite; }
+.nexo-eyes { transform: translate(calc(var(--ex) * 6px), calc(var(--ey) * 4px)); transition: transform 0.18s ease-out; }
+.eye { animation: nx-blink 5.4s infinite; }
+.nexo-tuft { transform-origin: 50% 100%; animation: nx-tuft 3.2s ease-in-out infinite; }
+.nexo-hand-l { animation: nx-hand 4.6s ease-in-out infinite; }
+.nexo-hand-r { animation: nx-hand 4.6s -2.3s ease-in-out infinite; }
+
+/* faces */
+.eye-arc, .eye-wink, .eye-sad, .lid, .fx-sweat, .fx-think, .fx-spark, .mouth > * { display: none; }
+.mouth .m-idle { display: inline; }
+.nexo[data-mood='happy'] .eye-open, .nexo[data-mood='cheer'] .eye-open { display: none; }
+.nexo[data-mood='happy'] .eye-arc, .nexo[data-mood='cheer'] .eye-arc { display: inline; }
+.nexo[data-mood='wink'] .eye-open rect:nth-of-type(2), .nexo[data-mood='wink'] .eye-open circle:nth-of-type(2) { display: none; }
+.nexo[data-mood='wink'] .eye-wink { display: inline; }
+.nexo[data-mood='sad'] .eye-sad { display: inline; }
+.nexo[data-mood='sad'] .eye-open { transform: translateY(3px); }
+.nexo[data-mood='smug'] .lid { display: inline; }
+.nexo[data-mood='think'] .nexo-eyes { transform: translate(-5px, -6px); }
+.nexo[data-mood='search'] .nexo-eyes { animation: nx-scan 1.6s ease-in-out infinite; }
+.nexo[data-mood='happy'] .mouth > *, .nexo[data-mood='wink'] .mouth > *, .nexo[data-mood='cheer'] .mouth > *, .nexo[data-mood='sad'] .mouth > *,
+.nexo[data-mood='think'] .mouth > *, .nexo[data-mood='smug'] .mouth > *, .nexo[data-mood='search'] .mouth > * { display: none; }
+.nexo[data-mood='happy'] .m-happy, .nexo[data-mood='wink'] .m-happy { display: inline; }
+.nexo[data-mood='cheer'] .m-cheer { display: inline; }
+.nexo[data-mood='sad'] .m-sad { display: inline; }
+.nexo[data-mood='think'] .m-think { display: inline; }
+.nexo[data-mood='smug'] .m-smug { display: inline; }
+.nexo[data-mood='search'] .m-search { display: inline; }
+.nexo[data-mood='sad'] .fx-sweat { display: inline; animation: nx-sweat 1.8s ease-in infinite; }
+.nexo[data-mood='think'] .fx-think { display: inline; }
+.nexo[data-mood='think'] .fx-think circle { animation: nx-dots 1.4s ease-in-out infinite; }
+.nexo[data-mood='think'] .fx-think circle:nth-child(2) { animation-delay: 0.2s; }
+.nexo[data-mood='think'] .fx-think circle:nth-child(3) { animation-delay: 0.4s; }
+.nexo[data-mood='cheer'] .fx-spark { display: inline; }
+.nexo[data-mood='cheer'] .sp { animation: nx-spark 0.9s ease-in-out infinite; }
+.nexo[data-mood='cheer'] .s2 { animation-delay: 0.2s; }
+.nexo[data-mood='cheer'] .s3 { animation-delay: 0.4s; }
+.nexo[data-mood='cheer'] .s4 { animation-delay: 0.6s; }
+.nexo[data-mood='cheer'] .nexo-float { animation: nx-jump 0.7s var(--ease) infinite alternate; }
+.nexo[data-mood='cheer'] .nexo-hand-l { animation: nx-cheer-l 0.5s ease-in-out infinite alternate; }
+.nexo[data-mood='cheer'] .nexo-hand-r { animation: nx-cheer-r 0.5s ease-in-out infinite alternate; }
+.nexo[data-mood='sad'] .nexo-float { animation: nx-slump 3s ease-in-out infinite; }
+.nexo[data-mood='sad'] .nexo-hand-l, .nexo[data-mood='sad'] .nexo-hand-r { animation: none; transform: translateY(14px); }
+.nexo[data-mood='think'] .nexo-hand-r { animation: none; transform: translate(-30px, -26px); }
+.nexo[data-mood='smug'] .nexo-hand-l, .nexo[data-mood='smug'] .nexo-hand-r { animation: none; transform: translateY(-14px) translateX(6px); }
+.nexo.is-hover:not(.is-poked) .nexo-hand-r { animation: nx-wave 0.6s ease-in-out infinite; }
+.nexo.is-poked .nexo-breathe { animation: nx-poke 0.7s var(--spring); }
+
+.nexo-speech { position: absolute; left: 50%; bottom: calc(100% - 6px); z-index: 2; translate: -50% 0; max-width: 260px; width: max-content; padding: 11px 18px; border-radius: 20px 20px 20px 6px; background: var(--cream); color: var(--ink); font: 700 0.98rem/1.2 var(--display); text-align: left; box-shadow: 0 14px 30px -12px rgb(0 0 0 / 0.55); animation: pop-in 0.5s var(--spring) both; }
+.nexo-speech::after { content: ''; position: absolute; left: 22px; bottom: -9px; border: 9px solid transparent; border-top-color: var(--cream); border-bottom: 0; border-left-width: 4px; }
+
+@keyframes nx-float { 50% { transform: translateY(-8px); } }
+@keyframes nx-shadow { 50% { transform: scale(0.86); opacity: 0.12; } }
+@keyframes nx-breathe { 50% { transform: scale(1.012, 1.022); } }
+@keyframes nx-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.08); } }
+@keyframes nx-tuft { 50% { transform: rotate(6deg); } }
+@keyframes nx-hand { 50% { transform: translateY(-6px); } }
+@keyframes nx-scan { 0%, 100% { transform: translate(-7px, 0); } 50% { transform: translate(7px, 0); } }
+@keyframes nx-sweat { 0% { transform: translateY(-6px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(22px); opacity: 0; } }
+@keyframes nx-dots { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes nx-spark { 0%, 100% { transform: scale(0.4) rotate(0); opacity: 0.3; } 50% { transform: scale(1.2) rotate(40deg); opacity: 1; } }
+@keyframes nx-jump { from { transform: translateY(0) scale(1.02, 0.97); } to { transform: translateY(-26px) scale(0.98, 1.03); } }
+@keyframes nx-cheer-l { from { transform: translate(-4px, -64px) rotate(-14deg); } to { transform: translate(2px, -76px) rotate(8deg); } }
+@keyframes nx-cheer-r { from { transform: translate(4px, -64px) rotate(14deg); } to { transform: translate(-2px, -76px) rotate(-8deg); } }
+@keyframes nx-slump { 50% { transform: translateY(3px) scale(1.01, 0.985); } }
+@keyframes nx-wave { 0%, 100% { transform: translate(0, -34px) rotate(-14deg); } 50% { transform: translate(6px, -40px) rotate(16deg); } }
+@keyframes nx-poke { 0% { transform: scale(1); } 25% { transform: scale(1.1, 0.88); } 55% { transform: scale(0.94, 1.1); } 100% { transform: scale(1); } }

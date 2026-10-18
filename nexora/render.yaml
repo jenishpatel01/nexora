@@ -1,0 +1,17 @@
+# Accounts are saved to a file, so the server needs a disk that survives restarts.
+# Render's free plan has no persistent disk: accounts would be wiped on every restart or deploy.
+services:
+  - type: web
+    name: nexora
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: nexora-data
+      mountPath: /var/data
+      sizeGB: 1
