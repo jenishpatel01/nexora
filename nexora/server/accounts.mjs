@@ -19,31 +19,56 @@ let db = { users: {}, sessions: {} }
 const byName = new Map()
 const byEmail = new Map()
 
-function load() {
-  try { db = JSON.parse(fs.readFileSync(FILE, 'utf8')) } catch { db = { users: {}, sessions: {} } }
+function load(raw) {
+  try { db = JSON.parse(raw ?? fs.readFileSync(FILE, 'utf8')) } catch { db = { users: {}, sessions: {} } }
   db.users ??= {}; db.sessions ??= {}
   const now = Date.now()
   for (const [h, s] of Object.entries(db.sessions)) if (s.exp < now || !db.users[s.uid]) delete db.sessions[h]
   for (const u of Object.values(db.users)) { byName.set(u.username.toLowerCase(), u.uid); byEmail.set(u.email, u.uid) }
 }
-load()
+
+/* Optional hosted storage (Upstash Redis REST). Set both variables to keep accounts on hosts with no persistent disk. */
+const REMOTE_URL = (process.env.UPSTASH_REDIS_REST_URL || '').trim().replace(/\/$/, '')
+const REMOTE_TOKEN = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim()
+const REMOTE = Boolean(REMOTE_URL && REMOTE_TOKEN)
+const REMOTE_KEY = 'nexora:db:v1'
+
+async function redis(...cmd) {
+  const res = await fetch(REMOTE_URL, { method: 'POST', headers: { authorization: `Bearer ${REMOTE_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify(cmd) })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok || body.error) throw new Error(body.error || `Upstash returned ${res.status}`)
+  return body.result
+}
+
+if (REMOTE) {
+  // a failed read must stop startup: carrying on with an empty database would overwrite the saved accounts on the next save
+  load((await redis('GET', REMOTE_KEY)) ?? '{}')
+  console.log(`Accounts stored in Upstash Redis (${Object.keys(db.users).length} loaded)`)
+} else load()
+
+function writeLocal() {
+  fs.mkdirSync(DATA_DIR, { recursive: true })
+  const tmp = `${FILE}.tmp`
+  fs.writeFileSync(tmp, JSON.stringify(db))
+  fs.renameSync(tmp, FILE)
+}
 
 let timer = null
+let writing = Promise.resolve()
+const persist = () => {
+  if (!REMOTE) { try { writeLocal() } catch (e) { console.error('Could not save accounts:', e.message) } return Promise.resolve() }
+  // one write at a time, so an older snapshot can never land after a newer one
+  writing = writing.then(() => redis('SET', REMOTE_KEY, JSON.stringify(db))).catch((e) => { console.error('Could not save accounts:', e.message) })
+  return writing
+}
 export function save() {
   if (timer) return
-  timer = setTimeout(() => {
-    timer = null
-    try {
-      fs.mkdirSync(DATA_DIR, { recursive: true })
-      const tmp = `${FILE}.tmp`
-      fs.writeFileSync(tmp, JSON.stringify(db))
-      fs.renameSync(tmp, FILE)
-    } catch (e) { console.error('Could not save accounts:', e.message) }
-  }, 250)
+  timer = setTimeout(() => { timer = null; persist() }, 250)
 }
+/** write now (used on shutdown); resolves once the data is stored */
 export function flush() {
   if (timer) { clearTimeout(timer); timer = null }
-  try { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(`${FILE}.tmp`, JSON.stringify(db)); fs.renameSync(`${FILE}.tmp`, FILE) } catch { /* ignore */ }
+  return persist()
 }
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex')

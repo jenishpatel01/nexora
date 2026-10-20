@@ -298,6 +298,6 @@ setInterval(() => {
   for (const [code, room] of rooms) if (now - room.created > ROOM_TTL) { room.host.ws.close(); room.guest?.ws.close(); rooms.delete(code) }
 }, 25000)
 
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { acc.flush(); process.exit(0) })
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { acc.flush().finally(() => process.exit(0)) })
 
 server.listen(PORT, '0.0.0.0', () => console.log(`NEXORA server on http://localhost:${PORT}  (api /api, ws /ws)`))
