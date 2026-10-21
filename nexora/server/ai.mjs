@@ -74,7 +74,7 @@ Return {"items":[{"context": situation, "options":[{"text": string, "share": num
 }
 
 /* -------------------------------- validation -------------------------------- */
-const str = (v, max) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f<>]/g, (c) => (c === '\n' ? '\n' : ' ')).trim().slice(0, max) : '')
+const str = (v, max) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, (c) => (c === '\n' ? '\n' : ' ')).trim().slice(0, max) : '')
 const textOf = (v, max) => str(v, max).replace(/\s+/g, ' ')
 const clampN = (n, a, b) => Math.max(a, Math.min(b, n))
 
