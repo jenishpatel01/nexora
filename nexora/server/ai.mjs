@@ -157,7 +157,10 @@ async function callGroq(model, prompt, timeoutMs) {
     }),
     signal: AbortSignal.timeout(timeoutMs),
   })
-  if (!res.ok) throw new Error(`Groq ${model} returned ${res.status}`)
+  if (!res.ok) {
+    const detail = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300)
+    throw new Error(`Groq ${model} returned ${res.status} ${detail}`)
+  }
   const body = await res.json()
   const parsed = JSON.parse(body?.choices?.[0]?.message?.content ?? '{}')
   return Array.isArray(parsed.items) ? parsed.items : []
