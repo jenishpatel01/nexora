@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { randomInt } from 'node:crypto'
 import { WebSocketServer } from 'ws'
 import * as acc from './accounts.mjs'
+import { aiEnabled, generateRounds } from './ai.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
@@ -37,9 +38,9 @@ setInterval(() => { const now = Date.now(); for (const [k, v] of hits) if (!v.so
 
 const ipOf = (req) => String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '').split(',')[0].trim()
 const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(body)) }
-const readBody = (req) => new Promise((resolve, reject) => {
+const readBody = (req, max = 4096) => new Promise((resolve, reject) => {
   let size = 0; const chunks = []
-  req.on('data', (c) => { size += c.length; if (size > 4096) { reject(new Error('too large')); req.destroy() } else chunks.push(c) })
+  req.on('data', (c) => { size += c.length; if (size > max) { reject(new Error('too large')); req.destroy() } else chunks.push(c) })
   req.on('end', () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString() || '{}')) } catch { reject(new Error('bad json')) } })
   req.on('error', reject)
 })
@@ -72,6 +73,14 @@ async function api(req, res, pathname) {
       const u = acc.sessionUser(bearer(req))
       return u ? json(res, 200, { me: me(u) }) : json(res, 401, { error: 'Signed out.' })
     }
+    if (req.method === 'POST' && pathname === '/api/rounds') {
+      if (limited(`rounds:${ip}`, 40, 600000)) return json(res, 429, { error: 'Slow down.' })
+      const b = await readBody(req, 16384)
+      const arena = String(b.arena ?? '')
+      if (!ARENAS.includes(arena)) return json(res, 400, { error: 'Unknown arena.' })
+      // empty list means "use the built-in questions"
+      return json(res, 200, { items: (await generateRounds(arena, b.avoid)) ?? [] })
+    }
     if (req.method === 'POST' && pathname === '/api/logout') { acc.endSession(bearer(req)); return json(res, 200, { ok: true }) }
     return json(res, 404, { error: 'Not found.' })
   } catch (e) {
@@ -82,7 +91,7 @@ async function api(req, res, pathname) {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x')
   if (url.pathname.startsWith('/api/')) { api(req, res, url.pathname); return }
-  if (url.pathname === '/health') { json(res, 200, { ok: true, rooms: rooms.size, online: online.size }); return }
+  if (url.pathname === '/health') { json(res, 200, { ok: true, rooms: rooms.size, online: online.size, ai: aiEnabled }); return }
   let file = path.join(DIST, decodeURIComponent(url.pathname))
   if (!file.startsWith(DIST)) { res.writeHead(403); res.end(); return }
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(DIST, 'index.html')
@@ -158,7 +167,7 @@ wss.on('connection', (ws) => {
   ws.hits = []
   ws.on('pong', () => { ws.alive = true })
 
-  ws.on('message', (raw) => {
+  ws.on('message', async (raw) => {
     const now = Date.now()
     ws.hits = ws.hits.filter((t) => now - t < 2000)
     if (ws.hits.push(now) > 30) return
@@ -256,9 +265,14 @@ wss.on('connection', (ws) => {
 
     if (m.t === 'start') {
       if (room.host.ws !== ws || !room.guest) return
-      room.started = true
-      const msg = { t: 'start', seed: randomInt(1, 2 ** 31 - 1), arena: room.arena, mode: room.mode }
-      send(room.host.ws, msg); send(room.guest.ws, msg)
+      if (room.starting) return
+      room.started = true; room.starting = true
+      // both players get the same fresh questions; without AI they build the same ones from the seed
+      const items = await generateRounds(room.arena)
+      room.starting = false
+      const msg = { t: 'start', seed: randomInt(1, 2 ** 31 - 1), arena: room.arena, mode: room.mode, items: items ?? undefined }
+      if (room.host.ws) send(room.host.ws, msg)
+      if (room.guest) send(room.guest.ws, msg)
       return
     }
 

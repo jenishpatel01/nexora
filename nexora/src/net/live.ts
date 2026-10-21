@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { ArenaId } from '../types'
-import type { RoundResult } from '../game/types'
+import type { Round, RoundResult } from '../game/types'
 import { getProfile } from '../game/store'
 import { dropToken, getAccount, getToken, subscribeAccount } from './account'
 import { wsUrl } from './config'
@@ -18,7 +18,7 @@ export type LiveState = {
   connecting: boolean
   room: LiveRoom | null
   /** set when the host starts a match; bumps on every start so a rematch is a new event */
-  start: { seed: number; n: number } | null
+  start: { seed: number; n: number; items?: Round[] } | null
   /** rival results by round index */
   answers: Record<number, RoundResult>
   /** the other player left or dropped */
@@ -106,7 +106,7 @@ function onMessage(ev: MessageEvent) {
       set({ room, closed: false, rivalGone: room.guest ? false : state.rivalGone })
       break
     }
-    case 'start': set({ start: { seed: m.seed as number, n: ++startN }, answers: {}, rivalGone: false }); break
+    case 'start': set({ start: { seed: m.seed as number, items: Array.isArray(m.items) ? (m.items as Round[]) : undefined, n: ++startN }, answers: {}, rivalGone: false }); break
     case 'answer': set({ answers: { ...state.answers, [m.idx as number]: m.res as RoundResult } }); break
     case 'left': set({ rivalGone: true }); break
     case 'closed': set({ closed: true, rivalGone: true, room: null }); break

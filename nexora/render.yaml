@@ -9,6 +9,8 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
+      - key: GROQ_API_KEY
+        sync: false
       - key: DATA_DIR
         value: /var/data
     disk:

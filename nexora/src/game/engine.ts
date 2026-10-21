@@ -31,26 +31,33 @@ function mulberry(seed: number) {
 }
 
 /** rounds for a match. With a seed the result is identical on every device. */
-export function buildRounds(arena: ArenaId, seed?: number): Round[] {
-  if (seed === undefined) return makeRounds(arena)
+export function buildRounds(arena: ArenaId, seed?: number, ai?: Round[] | null): Round[] {
+  if (seed === undefined) return makeRounds(arena, ai ?? [])
   const original = Math.random
   Math.random = mulberry(seed)
-  try { return makeRounds(arena) } finally { Math.random = original }
+  try { return makeRounds(arena, ai ?? []) } finally { Math.random = original }
 }
 
-function makeRounds(arena: ArenaId): Round[] {
+/** AI-written rounds of one kind first, topped up from the built-in bank when the AI gave fewer than needed */
+const fill = <T extends Round>(ai: Round[], kind: T['kind'], bank: readonly T[], keepOrder = false): T[] => {
+  const fresh = ai.filter((r): r is T => r.kind === kind)
+  return [...(keepOrder ? fresh : shuffle(fresh)), ...shuffle(bank)].slice(0, ROUNDS)
+}
+
+function makeRounds(arena: ArenaId, ai: Round[]): Round[] {
   const names = arenaById(arena).roundNames
   const stage = <T extends Round>(r: T, i: number): T => ({ ...r, stage: r.stage || names[i] })
   switch (arena) {
-    case 'coding': return shuffle(codingBank).slice(0, ROUNDS).map((r, i) => stage(shuffleQuiz(r), i))
-    case 'debate': return shuffle(debateBank).slice(0, ROUNDS).map((r, i) => stage(shufflePick({ ...r, stage: undefined }), i))
-    case 'roast': return shuffle(roastBank).slice(0, ROUNDS).map((r, i) => stage(shufflePick({ ...r, stage: undefined }), i))
-    case 'business': return shuffle(businessBank).slice(0, ROUNDS).map((r) => shufflePick(r))
+    case 'coding': return fill(ai, 'quiz', codingBank).map((r, i) => stage(shuffleQuiz(r), i))
+    case 'debate': return fill(ai, 'pick', debateBank).map((r, i) => stage(shufflePick({ ...r, stage: undefined }), i))
+    case 'roast': return fill(ai, 'pick', roastBank).map((r, i) => stage(shufflePick({ ...r, stage: undefined }), i))
+    case 'business': return fill(ai, 'pick', businessBank, true).map((r) => shufflePick(r))
     case 'knowledge': {
       const cats = shuffle(['Science', 'History', 'Sports', 'General'])
       const chosen = cats.map((c) => shuffle(knowledgeBank.filter((q) => q.category === c))[0])
       const extra = shuffle(knowledgeBank.filter((q) => !chosen.includes(q)))[0]
-      return shuffle([...chosen, extra]).map((r, i) => stage(shuffleQuiz(r), i))
+      const fresh = ai.filter((r): r is QuizRound => r.kind === 'quiz')
+      return shuffle([...fresh, ...chosen, extra]).slice(0, ROUNDS).map((r, i) => stage(shuffleQuiz(r), i))
     }
     case 'mind': {
       const seq = (len: number): Round => {
@@ -58,11 +65,15 @@ function makeRounds(arena: ArenaId): Round[] {
         while (steps.length < len) { const n = randInt(0, 8); if (n !== steps[steps.length - 1]) steps.push(n) }
         return { kind: 'sequence', length: len, time: 20, steps }
       }
+      const mindQuiz = (type: string, bank: QuizRound[]): QuizRound => {
+        const hit = shuffle(ai.filter((r): r is QuizRound => r.kind === 'quiz' && r.category === type))[0]
+        return shuffleQuiz(hit ? { ...hit, category: 'Mind' } : shuffle(bank)[0])
+      }
       const plan: Round[] = [
-        shuffleQuiz(shuffle(patternBank)[0]),
+        mindQuiz('pattern', patternBank),
         seq(4),
         { kind: 'reaction', time: 8, delay: randInt(1400, 3200) },
-        shuffleQuiz(shuffle(logicBank)[0]),
+        mindQuiz('logic', logicBank),
         seq(5),
       ]
       return plan.map((r, i) => stage(r, i))

@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { Arena, ArenaId, Go, Opponent, Screen } from '../types'
-import type { MatchOutcome, RoundLog } from '../game/types'
+import type { MatchOutcome, Round, RoundLog } from '../game/types'
 
 export type SessionKind = 'nexo' | 'online' | 'specialist' | 'friend' | 'practice' | 'daily'
 
@@ -11,7 +11,7 @@ export type MatchSession = {
   ranked: boolean
   mode: string
   /** set for a live room match: both players build the same rounds from this seed */
-  live?: { seed: number }
+  live?: { seed: number; items?: Round[] }
 }
 
 export type AppApi = {

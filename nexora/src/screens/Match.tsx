@@ -15,6 +15,8 @@ import { motionReduced } from '../motion/hooks'
 import { sfx } from '../motion/sound'
 import type { Mood } from '../types'
 import { leaveRoom, sendAnswer, useLive } from '../net/live'
+import { questionsFor, rememberSeen } from '../net/questions'
+import { ContextLoader } from '../components/Loader'
 
 type Phase = 'intro' | 'play' | 'wait' | 'reveal'
 type Res = Omit<RoundResult, 'points'>
@@ -190,6 +192,30 @@ function Reaction({ round, onDone }: { round: ReactionRound; onDone: (r: Res) =>
 
 /* ------------------------------ match ------------------------------ */
 export function ActiveMatch() {
+  const { session } = useApp()
+  const arenaId = session.arena
+  const liveItems = session.live ? session.live.items ?? null : undefined
+  // undefined = still asking for fresh questions, null = none available (built-in ones are used)
+  const [ai, setAi] = useState<Round[] | null | undefined>(liveItems)
+
+  useEffect(() => {
+    if (liveItems !== undefined) return
+    let cancelled = false
+    const { promise, consume } = questionsFor(arenaId)
+    promise.then((items) => {
+      if (cancelled) return
+      consume()
+      if (items) rememberSeen(arenaId, items)
+      setAi(items)
+    })
+    return () => { cancelled = true }
+  }, [arenaId, liveItems])
+
+  if (ai === undefined) return <ContextLoader message="Writing fresh questions..." arena={arenaId} />
+  return <MatchRun ai={ai} />
+}
+
+function MatchRun({ ai }: { ai: Round[] | null }) {
   const { go, session, setOutcome, setLogs } = useApp()
   const arena = arenaById(session.arena)
   const opp = session.opponent
@@ -199,7 +225,7 @@ export function ActiveMatch() {
   const liveSeed = session.live?.seed
   const live = liveSeed !== undefined
   const ls = useLive()
-  const rounds = useMemo(() => buildRounds(session.arena, liveSeed), [session.arena, liveSeed])
+  const rounds = useMemo(() => buildRounds(session.arena, liveSeed, ai), [session.arena, liveSeed, ai])
   const [mine, setMine] = useState<RoundResult | null>(null)
   const [idx, setIdx] = useState(0)
   const [phase, setPhase] = useState<Phase>('intro')

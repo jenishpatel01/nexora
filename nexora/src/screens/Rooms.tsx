@@ -127,7 +127,7 @@ export function Lobby() {
   useEffect(() => {
     if (!room || !live.start) return
     const s = takeStart()
-    if (s && rival) playLive(room.arena, rival, room.mode, s.seed)
+    if (s && rival) playLive(room.arena, rival, room.mode, s.seed, s.items)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live.start, room])
 
