@@ -54,6 +54,6 @@ npm start            # site + server on http://localhost:8787
 
 ## Fresh AI questions (Groq)
 
-Each match asks the server for new questions, so they do not repeat. `server/ai.mjs` calls Groq's free API (default model `llama-3.3-70b-versatile`, falling back to `llama-3.1-8b-instant`), checks the answer's shape, and returns only valid rounds. The game remembers the last 30 questions per arena on the player's device and asks the AI to avoid them. In live rooms the server generates one set and sends it to both players.
+Each match asks the server for new questions, so they do not repeat. `server/ai.mjs` calls Groq's free API (default model `openai/gpt-oss-120b`, falling back to `openai/gpt-oss-20b`), checks the answer's shape, and returns only valid rounds. The game remembers the last 30 questions per arena on the player's device and asks the AI to avoid them. In live rooms the server generates one set and sends it to both players.
 
 Set `GROQ_API_KEY` on the server (get a free key at console.groq.com). `GROQ_MODEL` is optional. If the key is missing or Groq fails or is slow, the game quietly uses its built-in question banks. `/health` shows `"ai": true` when the key is set.

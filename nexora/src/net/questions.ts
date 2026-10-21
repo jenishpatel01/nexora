@@ -30,7 +30,7 @@ export async function fetchQuestions(arena: ArenaId): Promise<Round[] | null> {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ arena, avoid: (readSeen()[arena] ?? []).slice(0, 24) }),
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(14000),
     })
     if (!res.ok) return null
     const data = (await res.json()) as { items?: Round[] }

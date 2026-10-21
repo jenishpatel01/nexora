@@ -4,7 +4,7 @@ import { randomInt } from 'node:crypto'
 
 const API_KEY = (process.env.GROQ_API_KEY || '').trim()
 const BASE = (process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/$/, '')
-const MODELS = [(process.env.GROQ_MODEL || '').trim() || 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant']
+const MODELS = [(process.env.GROQ_MODEL || '').trim() || 'openai/gpt-oss-120b', 'openai/gpt-oss-20b']
 export const aiEnabled = Boolean(API_KEY)
 
 const pickRandom = (list, n) => {
@@ -150,7 +150,9 @@ async function callGroq(model, prompt, timeoutMs) {
     method: 'POST',
     headers: { authorization: `Bearer ${API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
-      model, temperature: 1, max_tokens: 3000, response_format: { type: 'json_object' },
+      model, temperature: 1, max_tokens: 6000, response_format: { type: 'json_object' },
+      // gpt-oss models think before answering; keep that short so questions arrive fast
+      ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
       messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }],
     }),
     signal: AbortSignal.timeout(timeoutMs),
@@ -171,7 +173,7 @@ export async function generateRounds(arena, avoid = []) {
   const prompt = promptFor(arena, recent)
   for (const [i, model] of MODELS.entries()) {
     try {
-      const raw = await callGroq(model, prompt, i === 0 ? 7000 : 4000)
+      const raw = await callGroq(model, prompt, i === 0 ? 8000 : 4000)
       const items = normalizers[arena](raw.slice(0, 8)).filter(Boolean)
       if (items.length >= 3) return items
       console.warn(`AI (${model}) gave ${items.length} usable ${arena} items`)
